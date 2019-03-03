@@ -7,10 +7,13 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +22,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.ser.FilterProvider;
+import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import com.intelligent1069.spring.jpa.springbootjpa.entiry.User;
 import com.intelligent1069.spring.jpa.springbootjpa.service.UserRepository;
 
@@ -30,8 +36,15 @@ public class RestUserResource {
 	
 	@GetMapping("/users")
 	
-	public List<User> getAllUsers() {
-		return userRepository.findAll();
+	public MappingJacksonValue getAllUsers() {
+		List<User> a = userRepository.findAll();
+		
+		SimpleBeanPropertyFilter Filter_1 = SimpleBeanPropertyFilter.filterOutAllExcept("id","name");
+		
+		FilterProvider Filter = new SimpleFilterProvider().addFilter("Filter_1", Filter_1);
+		MappingJacksonValue mapping = new MappingJacksonValue(a);
+		mapping.setFilters(Filter);
+		return mapping;
 	}
 	
 	@GetMapping("/users/{id}")
@@ -58,7 +71,7 @@ public class RestUserResource {
 	
 	@PostMapping("/users")
 	 
-	public ResponseEntity<Object> insertUser(@RequestBody User user) {
+	public ResponseEntity<Object> insertUser(@Valid @RequestBody User user) {
 		 User saveduser = userRepository.save(user);
 			
 		 URI location = ServletUriComponentsBuilder
